@@ -21,7 +21,15 @@ class ZC_DMT_Charts {
             if (has_shortcode($post->post_content, 'economic_chart_dynamic') || 
                 has_shortcode($post->post_content, 'economic_chart_static')) {
 
-                wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.min.js', [], '4.4.1', true);
+                wp_dequeue_script('chartjs');
+                wp_enqueue_script(
+                    'chartjs-umd',
+                    'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js',
+                    [],
+                    '4.4.1',
+                    true
+                );
+                wp_enqueue_script('zc-dmt-charts', ZC_DMT_PLUGIN_URL . 'charts-frontend.js', ['chartjs-umd', 'jquery'], ZC_DMT_VERSION, true);
                 wp_enqueue_script('zc-dmt-charts', ZC_DMT_PLUGIN_URL . 'charts-frontend.js', ['chartjs', 'jquery'], ZC_DMT_VERSION, true);
 
                 wp_localize_script('zc-dmt-charts', 'zcCharts', [
