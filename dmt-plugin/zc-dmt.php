@@ -3,7 +3,7 @@
  * Plugin Name: Zestra Capital - Data Management Tool (DMT)
  * Plugin URI: https://client.zestracapital.com
  * Description: Complete data management system for economic indicators. Handles data sources, CSV imports, API integrations, and provides clean data APIs.
- * Version: 1.0.2
+ * Version: 1.0.3
  * Author: Zestra Capital
  * Author URI: https://zestracapital.com
  * Text Domain: zc-dmt
@@ -13,21 +13,17 @@
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
-    exit; // Exit if accessed directly
+    exit;
 }
 
 // Define plugin constants
-define( 'ZC_DMT_GOOGLE_CLIENT_ID', 'AIzaSyDREI6BL2PebxRMpZf9g-TEkVVel4F7wy4' );
-
-define( 'ZC_DMT_VERSION', '1.0.2' );
+define( 'ZC_DMT_VERSION', '1.0.3' );
 define( 'ZC_DMT_PLUGIN_FILE', __FILE__ );
 define( 'ZC_DMT_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ZC_DMT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'ZC_DMT_TEXT_DOMAIN', 'zc-dmt' );
+define( 'ZC_DMT_GOOGLE_CLIENT_ID', 'YOUR_GOOGLE_CLIENT_ID' );
 
-/**
- * Main DMT Plugin Class
- */
 class ZC_Data_Management_Tool {
 
     private static $instance = null;
@@ -44,14 +40,6 @@ class ZC_Data_Management_Tool {
     }
 
     private function init_hooks() {
-        // Handle Data Sources form submission
-        if(isset($_POST['zc_dmt_nonce']) && wp_verify_nonce($_POST['zc_dmt_nonce'],'zc_dmt_save_source')){
-            if(current_user_can('manage_options')){
-                update_option('zc_dmt_fred_api_key', sanitize_text_field($_POST['zc_dmt_fred_api_key']));
-                add_settings_error('zc_dmt','settings_updated',__('FRED API Key saved.','zc-dmt'),'updated');
-            }
-        }
-
         add_action( 'init', [ $this, 'init' ] );
         add_action( 'plugins_loaded', [ $this, 'load_textdomain' ] );
         add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
@@ -62,6 +50,8 @@ class ZC_Data_Management_Tool {
         // AJAX handlers
         add_action( 'wp_ajax_zc_dmt_save_drive_token', [ $this, 'save_drive_token' ] );
         add_action( 'wp_ajax_zc_dmt_manual_backup', [ $this, 'manual_backup' ] );
+        add_action( 'wp_ajax_zc_dmt_list_drive_accounts', [ $this, 'list_drive_accounts' ] );
+        add_action( 'wp_ajax_zc_dmt_remove_drive_account', [ $this, 'remove_drive_account' ] );
 
         // Cron hooks
         add_action( 'zc_dmt_daily_backup', [ $this, 'scheduled_backup' ] );
@@ -145,14 +135,20 @@ class ZC_Data_Management_Tool {
             return;
         }
 
+        // Debug: Log script enqueuing
+        error_log( 'ZC DMT: Enqueuing scripts for hook: ' . $hook );
+
         // Google API Client
         wp_enqueue_script( 'gapi-client', 'https://apis.google.com/js/api.js', [], null, true );
 
         // Backup Admin JS
-        wp_enqueue_script( 'zc-dmt-backup-admin', ZC_DMT_PLUGIN_URL . 'backup-admin.js', [ 'jquery', 'gapi-client' ], ZC_DMT_VERSION, true );
+        $js_url = ZC_DMT_PLUGIN_URL . 'backup-admin.js';
+        wp_enqueue_script( 'zc-dmt-backup-admin', $js_url, [ 'jquery', 'gapi-client' ], ZC_DMT_VERSION, true );
+
+        error_log( 'ZC DMT: Enqueued backup-admin.js from: ' . $js_url );
 
         wp_localize_script( 'zc-dmt-backup-admin', 'zcDmtBackup', [
-            'oauthClientId' => defined('ZC_DMT_GOOGLE_CLIENT_ID') ? ZC_DMT_GOOGLE_CLIENT_ID : 'YOUR_GOOGLE_CLIENT_ID',
+            'oauthClientId' => ZC_DMT_GOOGLE_CLIENT_ID,
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
             'nonce' => wp_create_nonce( 'zc_dmt_nonce' )
         ]);
@@ -232,11 +228,46 @@ class ZC_Data_Management_Tool {
         $accounts[$email] = [
             'token' => $token,
             'name' => $name,
-            'connected_at' => current_time( 'mysql' )
+            'connected_at' => current_time( 'mysql' ),
+            'folder_id' => null
         ];
 
         update_option( 'zc_dmt_drive_accounts', $accounts );
         wp_send_json_success( 'Google Drive account connected successfully' );
+    }
+
+    public function list_drive_accounts() {
+        check_ajax_referer( 'zc_dmt_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( 'Insufficient permissions' );
+        }
+
+        $accounts = get_option( 'zc_dmt_drive_accounts', [] );
+        wp_send_json_success( $accounts );
+    }
+
+    public function remove_drive_account() {
+        check_ajax_referer( 'zc_dmt_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( 'Insufficient permissions' );
+        }
+
+        $email = sanitize_email( $_POST['email'] );
+
+        if ( empty( $email ) ) {
+            wp_send_json_error( 'Invalid email' );
+        }
+
+        $accounts = get_option( 'zc_dmt_drive_accounts', [] );
+        if ( isset( $accounts[$email] ) ) {
+            unset( $accounts[$email] );
+            update_option( 'zc_dmt_drive_accounts', $accounts );
+            wp_send_json_success( 'Account removed successfully' );
+        } else {
+            wp_send_json_error( 'Account not found' );
+        }
     }
 
     public function manual_backup() {
