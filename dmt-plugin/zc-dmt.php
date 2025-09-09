@@ -75,7 +75,7 @@ class ZC_Data_Management_Tool {
             'class-csv-importer.php',
             'class-fred-api.php',
             'class-rest-api.php',
-            'class-backup.php','class-calculations.php'
+            'class-backup.php','class-calculations.php','class-charts.php'
         ];
 
         foreach ( $includes as $file ) {
