@@ -40,6 +40,36 @@ if ( ! defined( 'ABSPATH' ) ) exit;
                 </td>
             </tr>
         </table>
-        <?php submit_button(); ?>
+        
+<h2><?php _e('Backup & Integrations', 'zc-dmt'); ?></h2>
+<table class="form-table">
+    <tr valign="top">
+        <th scope="row"><?php _e('Google Drive Accounts', 'zc-dmt'); ?></th>
+        <td>
+            <button id="zc-dmt-connect-drive" class="button button-secondary"><?php _e('Connect Google Drive Account', 'zc-dmt'); ?></button>
+            <p class="description"><?php _e('Connect multiple Google Drive accounts for automated backups with rotation.', 'zc-dmt'); ?></p>
+            <ul id="zc-dmt-drive-accounts"></ul>
+        </td>
+    </tr>
+    <tr valign="top">
+        <th scope="row"><?php _e('Max Backups to Keep', 'zc-dmt'); ?></th>
+        <td>
+            <input type="number" name="zc_dmt_max_backups" value="<?php echo esc_attr( get_option('zc_dmt_max_backups', 10) ); ?>" class="small-text" min="1" />
+            <p class="description"><?php _e('Maximum number of backup files to retain per account.', 'zc-dmt'); ?></p>
+        </td>
+    </tr>
+    <tr valign="top">
+        <th scope="row"><?php _e('Backup Schedule', 'zc-dmt'); ?></th>
+        <td>
+            <select name="zc_dmt_backup_schedule">
+                <?php $schedules = ['none','daily','weekly']; foreach($schedules as $s): ?>
+                    <option value="<?php echo $s; ?>" <?php selected($s, get_option('zc_dmt_backup_schedule', 'none')); ?>><?php echo ucfirst($s); ?></option>
+                <?php endforeach; ?>
+            </select>
+            <p class="description"><?php _e('Schedule automatic backups.', 'zc-dmt'); ?></p>
+        </td>
+    </tr>
+</table>
+<!-- Backup & Integrations End --><?php submit_button(); ?>
     </form>
 </div>
