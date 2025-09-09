@@ -68,10 +68,14 @@ var ZCCharts = {
     },
 
     initStaticChart: function(chartId) {
+    console.log('ZCCharts: initStaticChart called for', chartId);
+
         var container = document.getElementById(chartId);
         if (!container) return;
 
         var indicators = container.dataset.indicators;
+    console.log('ZCCharts: rendering static chart for', indicators, 'type', type);
+
         var type = container.dataset.type || 'line';
 
         if (!indicators) return;
