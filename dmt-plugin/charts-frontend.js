@@ -213,3 +213,19 @@ var ZCCharts = {
 });
     }
 };
+// Auto-initialize charts on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize all static charts
+    document.querySelectorAll('.zci-static-chart').forEach(function(el) {
+        if (el.id) {
+            ZCCharts.initStaticChart(el.id);
+        }
+    });
+
+    // Initialize all dynamic charts
+    document.querySelectorAll('.zci-dynamic-chart').forEach(function(el) {
+        if (el.id) {
+            ZCCharts.initDynamicChart(el.id);
+        }
+    });
+});
