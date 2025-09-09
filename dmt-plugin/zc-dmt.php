@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants
-define( 'ZC_DMT_GOOGLE_CLIENT_ID', 'AIzaSyDREI6BL2PebxRMpZf9g-TEkVVel4F7wy4' );
+define( 'ZC_DMT_GOOGLE_CLIENT_ID', 'keys here' );
 
 define( 'ZC_DMT_VERSION', '1.0.2' );
 define( 'ZC_DMT_PLUGIN_FILE', __FILE__ );
