@@ -128,13 +128,7 @@ class ZC_DMT_Charts {
             <canvas class="zci-chart-canvas" style="height: calc(100% - 120px);"></canvas>
         </div>
 
-        <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof ZCCharts !== 'undefined') {
-                ZCCharts.initDynamicChart('<?php echo esc_js($chart_id); ?>');
-            }
-        });
-        </script>
+        
         <?php
         return ob_get_clean();
     }
