@@ -55,7 +55,16 @@ var ZCCharts = {
             if (!container.contains(e.target)) {
                 searchResults.style.display = 'none';
             }
-        });
+        }).catch(function(err) {
+    console.error('ZCCharts render error:', err);
+    // Display friendly message
+    var errorDiv = document.createElement('div');
+    errorDiv.className = 'zci-chart-error';
+    errorDiv.style.color='#666';
+    errorDiv.style.padding='20px';
+    errorDiv.textContent = 'Chart data is not available at the moment.';
+    container.appendChild(errorDiv);
+});
     },
 
     initStaticChart: function(chartId) {
@@ -188,6 +197,15 @@ var ZCCharts = {
                     }
                 }
             });
-        });
+        }).catch(function(err) {
+    console.error('ZCCharts render error:', err);
+    // Display friendly message
+    var errorDiv = document.createElement('div');
+    errorDiv.className = 'zci-chart-error';
+    errorDiv.style.color='#666';
+    errorDiv.style.padding='20px';
+    errorDiv.textContent = 'Chart data is not available at the moment.';
+    container.appendChild(errorDiv);
+});
     }
 };
