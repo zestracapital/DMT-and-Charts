@@ -3,7 +3,7 @@
  * Plugin Name: Zestra Capital - Data Management Tool (DMT)
  * Plugin URI: https://client.zestracapital.com
  * Description: Complete data management system for economic indicators. Handles data sources, CSV imports, API integrations, and provides clean data APIs.
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: Zestra Capital
  * Author URI: https://zestracapital.com
  * Text Domain: zc-dmt
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants
-define( 'ZC_DMT_VERSION', '1.0.1' );
+define( 'ZC_DMT_VERSION', '1.0.2' );
 define( 'ZC_DMT_PLUGIN_FILE', __FILE__ );
 define( 'ZC_DMT_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'ZC_DMT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -25,18 +25,11 @@ define( 'ZC_DMT_TEXT_DOMAIN', 'zc-dmt' );
 
 /**
  * Main DMT Plugin Class
- * Handles initialization, activation, deactivation with safe error handling
  */
 class ZC_Data_Management_Tool {
 
-    /**
-     * Single instance of the class
-     */
     private static $instance = null;
 
-    /**
-     * Get single instance
-     */
     public static function instance() {
         if ( self::$instance === null ) {
             self::$instance = new self();
@@ -44,64 +37,45 @@ class ZC_Data_Management_Tool {
         return self::$instance;
     }
 
-    /**
-     * Constructor
-     */
     private function __construct() {
         $this->init_hooks();
     }
 
-    /**
-     * Initialize WordPress hooks
-     */
     private function init_hooks() {
-        // Core hooks
         add_action( 'init', [ $this, 'init' ] );
         add_action( 'plugins_loaded', [ $this, 'load_textdomain' ] );
-
-        // Admin hooks
         add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
         add_action( 'admin_enqueue_scripts', [ $this, 'admin_scripts' ] );
         add_action( 'admin_init', [ $this, 'admin_init' ] );
-
-        // REST API
         add_action( 'rest_api_init', [ $this, 'register_rest_routes' ] );
 
         // AJAX handlers
-        add_action( 'wp_ajax_zc_dmt_import_csv', [ $this, 'handle_csv_import' ] );
-        add_action( 'wp_ajax_zc_dmt_test_connection', [ $this, 'test_data_source' ] );
-        add_action( 'wp_ajax_zc_dmt_sync_data', [ $this, 'sync_data_source' ] );
+        add_action( 'wp_ajax_zc_dmt_save_drive_token', [ $this, 'save_drive_token' ] );
+        add_action( 'wp_ajax_zc_dmt_manual_backup', [ $this, 'manual_backup' ] );
 
-        // Activation/Deactivation with safe error handling
+        // Cron hooks
+        add_action( 'zc_dmt_daily_backup', [ $this, 'scheduled_backup' ] );
+        add_filter( 'cron_schedules', [ $this, 'add_cron_schedules' ] );
+
         register_activation_hook( __FILE__, [ $this, 'safe_activate' ] );
         register_deactivation_hook( __FILE__, [ $this, 'deactivate' ] );
     }
 
-    /**
-     * Initialize plugin
-     */
     public function init() {
-        // Load includes safely
         $this->safe_load_includes();
-
-        // Initialize database if needed
         $this->maybe_create_tables();
-
-        // Fire init hook for other plugins
         do_action( 'zc_dmt_initialized' );
     }
 
-    /**
-     * Safely load plugin includes
-     */
     private function safe_load_includes() {
         $includes = [
-            'includes/class-database.php',
-            'includes/class-data-sources.php',
-            'includes/class-indicators.php',
-            'includes/class-csv-importer.php',
-            'includes/class-fred-api.php',
-            'includes/class-rest-api.php'
+            'class-database.php',
+            'class-data-sources.php',
+            'class-indicators.php',
+            'class-csv-importer.php',
+            'class-fred-api.php',
+            'class-rest-api.php',
+            'class-backup.php'
         ];
 
         foreach ( $includes as $file ) {
@@ -109,15 +83,11 @@ class ZC_Data_Management_Tool {
             if ( file_exists( $file_path ) ) {
                 require_once $file_path;
             } else {
-                // Log missing file but don't break
                 error_log( "ZC DMT: Missing include file: " . $file );
             }
         }
     }
 
-    /**
-     * Load plugin textdomain
-     */
     public function load_textdomain() {
         load_plugin_textdomain( 
             ZC_DMT_TEXT_DOMAIN, 
@@ -126,9 +96,6 @@ class ZC_Data_Management_Tool {
         );
     }
 
-    /**
-     * Create database tables if needed (safe version)
-     */
     private function maybe_create_tables() {
         try {
             $current_version = get_option( 'zc_dmt_db_version', '0' );
@@ -141,15 +108,10 @@ class ZC_Data_Management_Tool {
             }
         } catch ( Exception $e ) {
             error_log( 'ZC DMT Database Error: ' . $e->getMessage() );
-            // Don't crash, just log the error
         }
     }
 
-    /**
-     * Add admin menu
-     */
     public function add_admin_menu() {
-        // Main menu
         add_menu_page(
             __( 'Economic DMT', ZC_DMT_TEXT_DOMAIN ),
             __( 'Economic DMT', ZC_DMT_TEXT_DOMAIN ),
@@ -160,72 +122,31 @@ class ZC_Data_Management_Tool {
             25
         );
 
-        // Submenus
-        add_submenu_page(
-            'zc-dmt-dashboard',
-            __( 'Dashboard', ZC_DMT_TEXT_DOMAIN ),
-            __( 'Dashboard', ZC_DMT_TEXT_DOMAIN ),
-            'manage_options',
-            'zc-dmt-dashboard',
-            [ $this, 'render_dashboard_page' ]
-        );
-
-        add_submenu_page(
-            'zc-dmt-dashboard',
-            __( 'Data Sources', ZC_DMT_TEXT_DOMAIN ),
-            __( 'Data Sources', ZC_DMT_TEXT_DOMAIN ),
-            'manage_options',
-            'zc-dmt-sources',
-            [ $this, 'render_sources_page' ]
-        );
-
-        add_submenu_page(
-            'zc-dmt-dashboard',
-            __( 'Indicators', ZC_DMT_TEXT_DOMAIN ),
-            __( 'Indicators', ZC_DMT_TEXT_DOMAIN ),
-            'manage_options',
-            'zc-dmt-indicators',
-            [ $this, 'render_indicators_page' ]
-        );
-
-        add_submenu_page(
-            'zc-dmt-dashboard',
-            __( 'CSV Import', ZC_DMT_TEXT_DOMAIN ),
-            __( 'CSV Import', ZC_DMT_TEXT_DOMAIN ),
-            'manage_options',
-            'zc-dmt-import',
-            [ $this, 'render_import_page' ]
-        );
-
-        add_submenu_page(
-            'zc-dmt-dashboard',
-            __( 'Import History', ZC_DMT_TEXT_DOMAIN ),
-            __( 'Import History', ZC_DMT_TEXT_DOMAIN ),
-            'manage_options',
-            'zc-dmt-history',
-            [ $this, 'render_history_page' ]
-        );
-
-        add_submenu_page(
-            'zc-dmt-dashboard',
-            __( 'Settings', ZC_DMT_TEXT_DOMAIN ),
-            __( 'Settings', ZC_DMT_TEXT_DOMAIN ),
-            'manage_options',
-            'zc-dmt-settings',
-            [ $this, 'render_settings_page' ]
-        );
+        add_submenu_page( 'zc-dmt-dashboard', __( 'Dashboard', ZC_DMT_TEXT_DOMAIN ), __( 'Dashboard', ZC_DMT_TEXT_DOMAIN ), 'manage_options', 'zc-dmt-dashboard', [ $this, 'render_dashboard_page' ] );
+        add_submenu_page( 'zc-dmt-dashboard', __( 'Data Sources', ZC_DMT_TEXT_DOMAIN ), __( 'Data Sources', ZC_DMT_TEXT_DOMAIN ), 'manage_options', 'zc-dmt-sources', [ $this, 'render_sources_page' ] );
+        add_submenu_page( 'zc-dmt-dashboard', __( 'Indicators', ZC_DMT_TEXT_DOMAIN ), __( 'Indicators', ZC_DMT_TEXT_DOMAIN ), 'manage_options', 'zc-dmt-indicators', [ $this, 'render_indicators_page' ] );
+        add_submenu_page( 'zc-dmt-dashboard', __( 'CSV Import', ZC_DMT_TEXT_DOMAIN ), __( 'CSV Import', ZC_DMT_TEXT_DOMAIN ), 'manage_options', 'zc-dmt-import', [ $this, 'render_import_page' ] );
+        add_submenu_page( 'zc-dmt-dashboard', __( 'Import History', ZC_DMT_TEXT_DOMAIN ), __( 'Import History', ZC_DMT_TEXT_DOMAIN ), 'manage_options', 'zc-dmt-history', [ $this, 'render_history_page' ] );
+        add_submenu_page( 'zc-dmt-dashboard', __( 'Settings', ZC_DMT_TEXT_DOMAIN ), __( 'Settings', ZC_DMT_TEXT_DOMAIN ), 'manage_options', 'zc-dmt-settings', [ $this, 'render_settings_page' ] );
     }
 
-    /**
-     * Enqueue admin scripts and styles
-     */
     public function admin_scripts( $hook ) {
-        // Only load on DMT pages
         if ( strpos( $hook, 'zc-dmt' ) === false ) {
             return;
         }
 
-        // Localize script
+        // Google API Client
+        wp_enqueue_script( 'gapi-client', 'https://apis.google.com/js/api.js', [], null, true );
+
+        // Backup Admin JS
+        wp_enqueue_script( 'zc-dmt-backup-admin', ZC_DMT_PLUGIN_URL . 'backup-admin.js', [ 'jquery', 'gapi-client' ], ZC_DMT_VERSION, true );
+
+        wp_localize_script( 'zc-dmt-backup-admin', 'zcDmtBackup', [
+            'oauthClientId' => defined('ZC_DMT_GOOGLE_CLIENT_ID') ? ZC_DMT_GOOGLE_CLIENT_ID : 'YOUR_GOOGLE_CLIENT_ID',
+            'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+            'nonce' => wp_create_nonce( 'zc_dmt_nonce' )
+        ]);
+
         wp_localize_script( 'jquery', 'zcDMT', [
             'ajax_url' => admin_url( 'admin-ajax.php' ),
             'rest_url' => rest_url( 'zc-dmt/v1/' ),
@@ -240,27 +161,40 @@ class ZC_Data_Management_Tool {
         ]);
     }
 
-    /**
-     * Admin init
-     */
     public function admin_init() {
-        // Register settings
         $this->register_settings();
+        $this->maybe_schedule_backups();
     }
 
-    /**
-     * Register plugin settings
-     */
     private function register_settings() {
         register_setting( 'zc_dmt_settings', 'zc_dmt_fred_api_key' );
         register_setting( 'zc_dmt_settings', 'zc_dmt_auto_sync' );
         register_setting( 'zc_dmt_settings', 'zc_dmt_sync_frequency' );
         register_setting( 'zc_dmt_settings', 'zc_dmt_data_retention' );
+        register_setting( 'zc_dmt_settings', 'zc_dmt_max_backups' );
+        register_setting( 'zc_dmt_settings', 'zc_dmt_backup_schedule' );
     }
 
-    /**
-     * Register REST API routes
-     */
+    private function maybe_schedule_backups() {
+        $schedule = get_option( 'zc_dmt_backup_schedule', 'none' );
+
+        if ( $schedule !== 'none' ) {
+            if ( ! wp_next_scheduled( 'zc_dmt_daily_backup' ) ) {
+                wp_schedule_event( time(), $schedule, 'zc_dmt_daily_backup' );
+            }
+        } else {
+            wp_clear_scheduled_hook( 'zc_dmt_daily_backup' );
+        }
+    }
+
+    public function add_cron_schedules( $schedules ) {
+        $schedules['weekly'] = [
+            'interval' => WEEK_IN_SECONDS,
+            'display' => __( 'Weekly', ZC_DMT_TEXT_DOMAIN )
+        ];
+        return $schedules;
+    }
+
     public function register_rest_routes() {
         if ( class_exists( 'ZC_DMT_REST_API' ) ) {
             $rest_api = new ZC_DMT_REST_API();
@@ -268,117 +202,88 @@ class ZC_Data_Management_Tool {
         }
     }
 
-    /**
-     * Handle CSV import AJAX
-     */
-    public function handle_csv_import() {
-        // Verify nonce
-        if ( ! wp_verify_nonce( $_POST['nonce'], 'zc_dmt_nonce' ) ) {
-            wp_die( 'Security check failed' );
-        }
+    // AJAX Handlers
+    public function save_drive_token() {
+        check_ajax_referer( 'zc_dmt_nonce', 'nonce' );
 
-        // Check permissions
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( 'Insufficient permissions' );
+            wp_send_json_error( 'Insufficient permissions' );
         }
 
-        if ( class_exists( 'ZC_DMT_CSV_Importer' ) ) {
-            $importer = new ZC_DMT_CSV_Importer();
-            $result = $importer->handle_upload();
-            wp_send_json( $result );
+        $token = sanitize_text_field( $_POST['token'] );
+        $email = sanitize_email( $_POST['email'] );
+        $name = sanitize_text_field( $_POST['name'] );
+
+        if ( empty( $token ) || empty( $email ) ) {
+            wp_send_json_error( 'Invalid token or email' );
         }
 
-        wp_send_json_error( 'CSV Importer not available' );
+        $accounts = get_option( 'zc_dmt_drive_accounts', [] );
+        $accounts[$email] = [
+            'token' => $token,
+            'name' => $name,
+            'connected_at' => current_time( 'mysql' )
+        ];
+
+        update_option( 'zc_dmt_drive_accounts', $accounts );
+        wp_send_json_success( 'Google Drive account connected successfully' );
     }
 
-    /**
-     * Test data source connection
-     */
-    public function test_data_source() {
-        // Verify nonce and permissions
-        if ( ! wp_verify_nonce( $_POST['nonce'], 'zc_dmt_nonce' ) || ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( 'Security check failed' );
+    public function manual_backup() {
+        check_ajax_referer( 'zc_dmt_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( 'Insufficient permissions' );
         }
 
-        $source_id = intval( $_POST['source_id'] );
+        if ( class_exists( 'ZC_DMT_Backup' ) ) {
+            $backup = new ZC_DMT_Backup();
+            $result = $backup->create_backup();
 
-        if ( class_exists( 'ZC_DMT_Data_Sources' ) ) {
-            $sources = new ZC_DMT_Data_Sources();
-            $result = $sources->test_connection( $source_id );
-            wp_send_json( $result );
+            if ( $result ) {
+                wp_send_json_success( 'Backup created successfully' );
+            } else {
+                wp_send_json_error( 'Backup failed' );
+            }
+        } else {
+            wp_send_json_error( 'Backup class not available' );
         }
-
-        wp_send_json_error( 'Data Sources handler not available' );
     }
 
-    /**
-     * Sync data source
-     */
-    public function sync_data_source() {
-        // Verify nonce and permissions
-        if ( ! wp_verify_nonce( $_POST['nonce'], 'zc_dmt_nonce' ) || ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( 'Security check failed' );
+    public function scheduled_backup() {
+        if ( class_exists( 'ZC_DMT_Backup' ) ) {
+            $backup = new ZC_DMT_Backup();
+            $backup->create_backup();
         }
-
-        $source_id = intval( $_POST['source_id'] );
-
-        if ( class_exists( 'ZC_DMT_Data_Sources' ) ) {
-            $sources = new ZC_DMT_Data_Sources();
-            $result = $sources->sync_data( $source_id );
-            wp_send_json( $result );
-        }
-
-        wp_send_json_error( 'Data Sources handler not available' );
     }
 
-    /**
-     * Safe plugin activation
-     */
     public function safe_activate() {
         try {
-            // Set default options
             add_option( 'zc_dmt_version', ZC_DMT_VERSION );
             add_option( 'zc_dmt_activated_time', current_time( 'timestamp' ) );
 
-            // Try to create database tables
             if ( class_exists( 'ZC_DMT_Database' ) ) {
                 ZC_DMT_Database::create_tables();
                 ZC_DMT_Database::insert_default_sources();
                 ZC_DMT_Database::insert_sample_indicators();
             }
 
-            // Flush rewrite rules
             flush_rewrite_rules();
-
-            // Fire activation hook
             do_action( 'zc_dmt_activated' );
 
         } catch ( Exception $e ) {
-            // Log error but don't crash WordPress
             error_log( 'ZC DMT Activation Error: ' . $e->getMessage() );
-
-            // Set activation notice
             set_transient( 'zc_dmt_activation_error', $e->getMessage(), 300 );
         }
     }
 
-    /**
-     * Plugin deactivation
-     */
     public function deactivate() {
-        // Clear scheduled events
-        wp_clear_scheduled_hook( 'zc_dmt_sync_data' );
-
-        // Flush rewrite rules
+        wp_clear_scheduled_hook( 'zc_dmt_daily_backup' );
         flush_rewrite_rules();
-
-        // Fire deactivation hook
         do_action( 'zc_dmt_deactivated' );
     }
 
-    /**
-     * Render admin pages safely
-     */
+    // Admin page renderers
     public function render_dashboard_page() {
         $this->safe_include_admin_page( 'dashboard.php' );
     }
@@ -403,11 +308,8 @@ class ZC_Data_Management_Tool {
         $this->safe_include_admin_page( 'settings.php' );
     }
 
-    /**
-     * Safely include admin page
-     */
     private function safe_include_admin_page( $page ) {
-        $file_path = ZC_DMT_PLUGIN_DIR . 'admin/' . $page;
+        $file_path = ZC_DMT_PLUGIN_DIR . $page;
         if ( file_exists( $file_path ) ) {
             include $file_path;
         } else {
@@ -416,26 +318,17 @@ class ZC_Data_Management_Tool {
     }
 }
 
-/**
- * Initialize the plugin
- */
+// Initialize plugin
 function zc_dmt_init() {
     return ZC_Data_Management_Tool::instance();
 }
-
-// Start the plugin
 zc_dmt_init();
 
-/**
- * Helper function to get DMT instance
- */
 function zc_dmt() {
     return ZC_Data_Management_Tool::instance();
 }
 
-/**
- * Show activation error notice if any
- */
+// Show activation error notice if any
 add_action( 'admin_notices', function() {
     $error = get_transient( 'zc_dmt_activation_error' );
     if ( $error ) {
