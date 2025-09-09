@@ -4,6 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 <div class="wrap">
     <h1><?php _e( 'DMT Settings', 'zc-dmt' ); ?></h1>
     <form method="post" action="options.php">
+        <?php settings_errors(); ?>
         <?php settings_fields( 'zc_dmt_settings' ); ?>
         <?php do_settings_sections( 'zc_dmt_settings' ); ?>
         <table class="form-table">
