@@ -42,6 +42,14 @@ class ZC_Data_Management_Tool {
     }
 
     private function init_hooks() {
+        // Handle Data Sources form submission
+        if(isset($_POST['zc_dmt_nonce']) && wp_verify_nonce($_POST['zc_dmt_nonce'],'zc_dmt_save_source')){
+            if(current_user_can('manage_options')){
+                update_option('zc_dmt_fred_api_key', sanitize_text_field($_POST['zc_dmt_fred_api_key']));
+                add_settings_error('zc_dmt','settings_updated',__('FRED API Key saved.','zc-dmt'),'updated');
+            }
+        }
+
         add_action( 'init', [ $this, 'init' ] );
         add_action( 'plugins_loaded', [ $this, 'load_textdomain' ] );
         add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
