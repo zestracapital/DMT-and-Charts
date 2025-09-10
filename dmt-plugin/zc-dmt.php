@@ -325,29 +325,30 @@ class ZC_Data_Management_Tool {
     }
 
     // Admin page renderers
-    public function render_dashboard_page() {
-        $this->safe_include_admin_page( 'dashboard.php' );
-    }
+    // Admin page renderers
+public function render_dashboard_page() {
+    $this->safe_include_admin_page( 'admin/dashboard.php' );
+}
 
-    public function render_sources_page() {
-        $this->safe_include_admin_page( 'sources.php' );
-    }
+public function render_sources_page() {
+    $this->safe_include_admin_page( 'admin/sources.php' );
+}
 
-    public function render_indicators_page() {
-        $this->safe_include_admin_page( 'indicators.php' );
-    }
+public function render_indicators_page() {
+    $this->safe_include_admin_page( 'admin/indicators.php' );
+}
 
-    public function render_import_page() {
-        $this->safe_include_admin_page( 'import.php' );
-    }
+public function render_import_page() {
+    $this->safe_include_admin_page( 'admin/import.php' );
+}
 
-    public function render_history_page() {
-        $this->safe_include_admin_page( 'history.php' );
-    }
+public function render_history_page() {
+    $this->safe_include_admin_page( 'admin/history.php' );
+}
 
-    public function render_settings_page() {
-        $this->safe_include_admin_page( 'settings.php' );
-    }
+public function render_settings_page() {
+    $this->safe_include_admin_page( 'admin/settings.php' );
+}
 
     private function safe_include_admin_page( $page ) {
         $file_path = ZC_DMT_PLUGIN_DIR . $page;
