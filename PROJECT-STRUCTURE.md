@@ -5,26 +5,36 @@ Complete WordPress plugin system for economic data management and visualization.
 
 ## Repository Structure
 
-```
-DMT-and-Charts/
-├── dmt-plugin/                 # Data Management Tool Plugin
-│   ├── zc-dmt.php             # Main DMT plugin file
-│   ├── includes/              # Core DMT classes
-│   ├── admin/                 # Admin interface
-│   ├── assets/               # DMT specific assets
-│   └── templates/            # DMT templates
-│
-├── charts-plugin/             # Charts System Plugin  
-│   ├── zc-charts.php         # Main Charts plugin file
-│   ├── includes/             # Core Charts classes
-│   ├── assets/               # Charts assets (React, CSS)
-│   │   ├── js/               # Your existing Chart.js + React code
-│   │   └── css/              # Chart styling
-│   └── templates/            # Chart templates
-│
-├── shared/                   # Shared utilities (if any)
-└── docs/                     # Documentation
-```
+zc-dmt/                       # Plugin root
+├── admin/                    # Admin interface templates and JS
+│   ├── dashboard.php
+│   ├── indicators.php
+│   ├── import.php
+│   ├── history.php
+│   ├── settings.php
+│   ├── sources.php
+│   └── js/
+│       └── indicators.js     # Admin JS for indicators CRUD
+├── includes/                 # Core PHP classes
+│   ├── class-database.php
+│   ├── class-data-sources.php
+│   ├── class-indicators.php
+│   ├── class-csv-importer.php
+│   ├── class-fred-api.php
+│   ├── class-rest-api.php
+│   ├── class-backup.php
+│   ├── class-calculations.php
+│   ├── class-charts.php
+│   └── class-error-logger.php
+├── static-charts/            # Static chart assets (for shortcode without search/compare)
+│   └── [CSS/JS as needed]
+├── charts-frontend.js        # Frontend logic for dynamic charts
+├── backup-admin.js           # Admin JS for backup integration
+├── zc-dmt.php                # Main plugin bootstrap
+├── zestra-charts.php         # Charts plugin integration point
+├── README.md                 # Project overview
+└── PROJECT-STRUCTURE.md      # This file
+
 
 ## Plugins Communication
 
@@ -41,8 +51,8 @@ DMT-and-Charts/
 
 ## Development Status
 
-🔧 **Phase 1**: DMT Plugin Core ← Current
-🔧 **Phase 2**: Charts Plugin Integration  
+🔧 **Phase 1**: DMT Plugin Core 
+🔧 **Phase 2**: Charts Plugin Integration  ← Current
 🔧 **Phase 3**: Advanced Features
 🔧 **Phase 4**: UI/UX Polish
 
