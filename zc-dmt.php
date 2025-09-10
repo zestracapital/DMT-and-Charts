@@ -66,7 +66,6 @@
             $backup->create_backup();
         }
     }
-
     public function add_admin_menu() {
         add_menu_page(
             'Data Management Tool',
@@ -96,15 +95,12 @@
             array( $this, 'render_manual_calculations_page' )
         );
     }
-
     public function render_add_indicators_page() {
-        include_once plugin_dir_path( __FILE__ ) . 'admin/add indicators.php';
+        include_once plugin_dir_path( __FILE__ ) . 'admin/add_indicators.php';
     }
-
     public function render_manual_calculations_page() {
-        include_once plugin_dir_path( __FILE__ ) . 'admin/manual calculations.php';
+        include_once plugin_dir_path( __FILE__ ) . 'admin/manual_calculations.php';
     }
-
     public function safe_activate() {
         try {
     }
