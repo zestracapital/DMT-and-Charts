@@ -325,29 +325,31 @@ class ZC_Data_Management_Tool {
     }
 
     // Admin page renderers
-    public function render_dashboard_page() {
-        $this->safe_include_admin_page( 'dashboard.php' );
-    }
+    
+  public function render_dashboard_page() {
+    $this->safe_include_admin_page('dmt-plugin/admin/dashboard.php');
+}
 
-    public function render_sources_page() {
-        $this->safe_include_admin_page( 'sources.php' );
-    }
+public function render_sources_page() {
+    $this->safe_include_admin_page('dmt-plugin/admin/sources.php');
+}
 
-    public function render_indicators_page() {
-        $this->safe_include_admin_page( 'indicators.php' );
-    }
+public function render_indicators_page() {
+    $this->safe_include_admin_page('dmt-plugin/admin/indicators.php');
+}
 
-    public function render_import_page() {
-        $this->safe_include_admin_page( 'import.php' );
-    }
+public function render_import_page() {
+    $this->safe_include_admin_page('dmt-plugin/admin/import.php');
+}
 
-    public function render_history_page() {
-        $this->safe_include_admin_page( 'history.php' );
-    }
+public function render_history_page() {
+    $this->safe_include_admin_page('dmt-plugin/admin/history.php');
+}
 
-    public function render_settings_page() {
-        $this->safe_include_admin_page( 'settings.php' );
-    }
+public function render_settings_page() {
+    $this->safe_include_admin_page('dmt-plugin/admin/settings.php');
+}
+
 
     private function safe_include_admin_page( $page ) {
         $file_path = ZC_DMT_PLUGIN_DIR . $page;
@@ -376,4 +378,5 @@ add_action( 'admin_notices', function() {
         echo '<div class="notice notice-warning is-dismissible"><p><strong>ZC DMT:</strong> ' . esc_html( $error ) . '</p></div>';
         delete_transient( 'zc_dmt_activation_error' );
     }
+
 });
