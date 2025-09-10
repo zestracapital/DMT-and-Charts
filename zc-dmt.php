@@ -327,27 +327,27 @@ class ZC_Data_Management_Tool {
     // Admin page renderers
     
   public function render_dashboard_page() {
-    $this->safe_include_admin_page('dmt-plugin/admin/dashboard.php');
+    $this->safe_include_admin_page('admin/dashboard.php');
 }
 
 public function render_sources_page() {
-    $this->safe_include_admin_page('dmt-plugin/admin/sources.php');
+    $this->safe_include_admin_page('admin/sources.php');
 }
 
 public function render_indicators_page() {
-    $this->safe_include_admin_page('dmt-plugin/admin/indicators.php');
+    $this->safe_include_admin_page('admin/indicators.php');
 }
 
 public function render_import_page() {
-    $this->safe_include_admin_page('dmt-plugin/admin/import.php');
+    $this->safe_include_admin_page('admin/import.php');
 }
 
 public function render_history_page() {
-    $this->safe_include_admin_page('dmt-plugin/admin/history.php');
+    $this->safe_include_admin_page('admin/history.php');
 }
 
 public function render_settings_page() {
-    $this->safe_include_admin_page('dmt-plugin/admin/settings.php');
+    $this->safe_include_admin_page('admin/settings.php');
 }
 
 
