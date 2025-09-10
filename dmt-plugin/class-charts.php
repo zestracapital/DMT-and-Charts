@@ -1,17 +1,19 @@
-<?php /**
+<?php 
+/**
  * Chart shortcode system for DMT plugin
  * Provides dynamic and static chart shortcodes
  */
 if (!defined('ABSPATH')) exit;
 
 class ZC_DMT_Charts {
+    
     public static function init() {
         add_shortcode('economic_chart_dynamic', [__CLASS__, 'dynamic_shortcode']);
         add_shortcode('economic_chart_static', [__CLASS__, 'static_shortcode']);
         add_action('wp_enqueue_scripts', [__CLASS__, 'enqueue_chart_assets']);
         add_action('rest_api_init', [__CLASS__, 'register_rest_routes']);
     }
-
+    
     public static function register_rest_routes() {
         register_rest_route('zc-dmt/v1', '/data/(?P<slug>[a-zA-Z0-9\-_]+)', [
             'methods' => 'GET',
@@ -19,7 +21,7 @@ class ZC_DMT_Charts {
             'permission_callback' => '__return_true'
         ]);
     }
-
+    
     public static function get_indicator_data($request) {
         $slug = $request->get_param('slug');
         
@@ -37,12 +39,12 @@ class ZC_DMT_Charts {
         
         return new WP_Error('not_found', 'Indicator data not found', ['status' => 404]);
     }
-
+    
     public static function enqueue_chart_assets() {
         // Only enqueue when shortcodes are used
         global $post;
         if (is_a($post, 'WP_Post')) {
-            if (has_shortcode($post->post_content, 'economic_chart_dynamic') || 
+            if (has_shortcode($post->post_content, 'economic_chart_dynamic') ||
                 has_shortcode($post->post_content, 'economic_chart_static')) {
                 wp_dequeue_script('chartjs');
                 wp_enqueue_script(
@@ -60,36 +62,34 @@ class ZC_DMT_Charts {
                 ]);
                 wp_add_inline_style('wp-block-library', '
                 .zci-dynamic-chart {
-                    border: 1px solid #e5e7eb;
-                    border-radius: 10px;
+                    border: 1px solid #ddd;
+                    border-radius: 8px;
                     padding: 20px;
-                    background: #fff;
                     margin: 20px 0;
+                    background: #fff;
                 }
                 .zci-chart-controls {
+                    margin-bottom: 15px;
                     display: flex;
                     gap: 10px;
-                    margin-bottom: 15px;
-                    flex-wrap: wrap;
+                    align-items: center;
                 }
                 .zci-search-input {
                     flex: 1;
-                    min-width: 250px;
-                    padding: 8px;
+                    padding: 8px 12px;
                     border: 1px solid #ccc;
                     border-radius: 4px;
                 }
                 .zci-search-results {
-                    list-style: none;
-                    margin: 0;
-                    padding: 0;
-                    max-height: 150px;
+                    max-height: 200px;
                     overflow-y: auto;
-                    border: 1px solid #ccc;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    margin: 10px 0;
                     display: none;
                 }
                 .zci-search-results li {
-                    padding: 8px;
+                    padding: 8px 12px;
                     cursor: pointer;
                     border-bottom: 1px solid #eee;
                 }
@@ -97,40 +97,45 @@ class ZC_DMT_Charts {
                     background: #f5f5f5;
                 }
                 .zci-selected-indicators {
-                    margin: 10px 0;
+                    margin: 15px 0;
                 }
                 .zci-indicator-tag {
                     display: inline-block;
-                    background: #007cba;
+                    background: #0073aa;
                     color: white;
                     padding: 4px 8px;
                     margin: 2px;
-                    border-radius: 4px;
+                    border-radius: 12px;
                     font-size: 12px;
                 }
                 .zci-indicator-tag .remove {
                     margin-left: 5px;
                     cursor: pointer;
+                    font-weight: bold;
                 }
-                .zci-static-chart canvas {
-                    width: 100% !important;
-                    height: auto !important;
+                .zci-static-chart {
+                    border: 1px solid #ddd;
+                    border-radius: 8px;
+                    padding: 20px;
+                    margin: 20px 0;
+                    background: #fff;
                 }
                 ');
             }
         }
     }
-
+    
     public static function dynamic_shortcode($atts) {
         $atts = shortcode_atts([
-            'title' => 'Economic Dashboard',
+            'title' => 'Economic Chart',
             'height' => '600px',
             'theme' => 'light',
             'show_search' => 'true',
             'show_compare' => 'true'
         ], $atts, 'economic_chart_dynamic');
-
+        
         $chart_id = 'zci-dynamic-' . wp_generate_uuid4();
+        
         ob_start();
         ?>
         <div class="zci-dynamic-chart" data-theme="<?php echo esc_attr($atts['theme']); ?>" id="<?php echo esc_attr($chart_id); ?>" style="height: <?php echo esc_attr($atts['height']); ?>;">
@@ -140,16 +145,17 @@ class ZC_DMT_Charts {
                 <input class="zci-search-input" placeholder="Search economic indicators..." type="text"/>
                 <button class="button" type="button">Add Indicator</button>
             </div>
+            <div class="zci-chart-container"><canvas class="zci-chart-canvas" style="height:400px;width:100%"></canvas></div>
             <ul class="zci-search-results"></ul>
             <div class="zci-selected-indicators"></div>
             <?php endif; ?>
-            <canvas class="zci-chart-canvas" style="height: calc(100% - 120px);"></canvas>
         </div>
         
-        <?php 
+        <?php
+        
         return ob_get_clean();
     }
-
+    
     public static function static_shortcode($atts) {
         $atts = shortcode_atts([
             'indicators' => '',
@@ -158,12 +164,13 @@ class ZC_DMT_Charts {
             'type' => 'line',
             'theme' => 'light'
         ], $atts, 'economic_chart_static');
-
+        
         if (empty($atts['indicators'])) {
             return 'No indicators specified for static chart';
         }
-
+        
         $chart_id = 'zci-static-' . wp_generate_uuid4();
+        
         ob_start();
         ?>
         <div class="zci-static-chart" data-indicators="<?php echo esc_attr($atts['indicators']); ?>" data-theme="<?php echo esc_attr($atts['theme']); ?>" data-type="<?php echo esc_attr($atts['type']); ?>" id="<?php echo esc_attr($chart_id); ?>" style="height: <?php echo esc_attr($atts['height']); ?>;">
@@ -180,7 +187,8 @@ class ZC_DMT_Charts {
         });
         </script>
         
-        <?php 
+        <?php
+        
         return ob_get_clean();
     }
 }
