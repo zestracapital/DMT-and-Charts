@@ -406,6 +406,34 @@ add_action( 'admin_notices', function() {
         delete_transient( 'zc_dmt_activation_error' );
     }
 
+    /**
+ * Render the “Add Indicators” admin page.
+ */
+public function render_add_indicators_page() {
+    $file = plugin_dir_path(__FILE__) . 'admin/add_indicators.php';
+    if ( file_exists( $file ) ) {
+        include $file;
+    } else {
+        echo '<div class="wrap"><h1>' . esc_html__( 'Page Not Found', 'zc-dmt' ) . '</h1>';
+        echo '<p>' . esc_html__( 'Template missing: admin/add_indicators.php', 'zc-dmt' ) . '</p></div>';
+    }
+}
+
+/**
+ * Render the “Manual Calculations” admin page.
+ */
+public function render_manual_calculations_page() {
+    $file = plugin_dir_path(__FILE__) . 'admin/manual_calculations.php';
+    if ( file_exists( $file ) ) {
+        include $file;
+    } else {
+        echo '<div class="wrap"><h1>' . esc_html__( 'Page Not Found', 'zc-dmt' ) . '</h1>';
+        echo '<p>' . esc_html__( 'Template missing: admin/manual_calculations.php', 'zc-dmt' ) . '</p></div>';
+    }
+}
+
+
 });
+
 
 
