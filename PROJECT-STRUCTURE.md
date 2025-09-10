@@ -5,6 +5,7 @@ Complete WordPress plugin system for economic data management and visualization.
 
 ## Repository Structure
 
+```
 zc-dmt/                       # Plugin root
 ├── admin/                    # Admin interface templates and JS
 │   ├── dashboard.php
@@ -34,6 +35,8 @@ zc-dmt/                       # Plugin root
 ├── zestra-charts.php         # Charts plugin integration point
 ├── README.md                 # Project overview
 └── PROJECT-STRUCTURE.md      # This file
+ # Documentation
+```
 
 
 ## Plugins Communication
