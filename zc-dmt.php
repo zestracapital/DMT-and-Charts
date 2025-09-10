@@ -337,15 +337,7 @@ public function render_sources_page() {
 public function render_indicators_page() {
     $this->safe_include_admin_page('admin/indicators.php');
 }
-    
-    public function render_settings_page() {
-    $this->safe_include_admin_page('admin/add indicators.php');
-}
 
-public function render_settings_page() {
-    $this->safe_include_admin_page('admin/manual calculations.php');
-}
-    
 public function render_import_page() {
     $this->safe_include_admin_page('admin/import.php');
 }
@@ -388,4 +380,3 @@ add_action( 'admin_notices', function() {
     }
 
 });
-
