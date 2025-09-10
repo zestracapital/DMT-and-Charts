@@ -121,6 +121,25 @@ class ZC_Data_Management_Tool {
             'dashicons-database-import',
             25
         );
+            // Register “Add Indicators” submenu
+    add_submenu_page(
+        'zc_dmt_main_menu',
+        __('Add Indicators', 'zc-dmt'),
+        __('Add Indicators', 'zc-dmt'),
+        'manage_options',
+        'zc_dmt_add_indicators',
+        [ $this, 'render_add_indicators_page' ]
+    );
+
+    // Register “Manual Calculations” submenu
+    add_submenu_page(
+        'zc_dmt_main_menu',
+        __('Manual Calculations', 'zc-dmt'),
+        __('Manual Calculations', 'zc-dmt'),
+        'manage_options',
+        'zc_dmt_manual_calculations',
+        [ $this, 'render_manual_calculations_page' ]
+    );
 
         add_submenu_page( 'zc-dmt-dashboard', __( 'Dashboard', ZC_DMT_TEXT_DOMAIN ), __( 'Dashboard', ZC_DMT_TEXT_DOMAIN ), 'manage_options', 'zc-dmt-dashboard', [ $this, 'render_dashboard_page' ] );
         add_submenu_page( 'zc-dmt-dashboard', __( 'Data Sources', ZC_DMT_TEXT_DOMAIN ), __( 'Data Sources', ZC_DMT_TEXT_DOMAIN ), 'manage_options', 'zc-dmt-sources', [ $this, 'render_sources_page' ] );
@@ -388,4 +407,5 @@ add_action( 'admin_notices', function() {
     }
 
 });
+
 
